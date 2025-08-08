@@ -3,6 +3,7 @@ import { ApiResponse } from "../util/ApiResponse.js";
 import { asyncHandler } from "../util/asyncHandler.js";
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
+import { upsertStreamUSer } from "../lib/stream.js";
 
 export const signup = asyncHandler(async (req, res) => {
     const { email, password, fullName } = req.body;
@@ -40,6 +41,17 @@ export const signup = asyncHandler(async (req, res) => {
         password, // Make sure you hash password in your model pre-save
         profilePic: randomAvatar,
     });
+
+    try {
+        await upsertStreamUSer({
+            id:newUser._id.toString(),
+            name:newUser.fullName,
+            image:newUser.profilePic || ""
+        })
+        console.log(`new user created for ${newUser.fullName}`);
+    } catch (error) {
+        throw new ApiError(400,"unable to create stream user");
+    }
 
     // 7. Generate token
     const token = jwt.sign({ user_id: newUser._id }, process.env.JWT_SECRET_KEY, {
