@@ -117,3 +117,35 @@ export const logout = asyncHandler((req, res) => {
     res.status(200)
         .json(new ApiResponse(200, "successfully logged out"));
 });
+
+export const onbaord =asyncHandler( async (req,res)=>{
+    
+    const userId = req.user._id;
+
+    const { fullName, bio, nativeLanguage, learningLanguage, location} = req.body;
+
+    if (!fullName || !bio|| !nativeLanguage|| !learningLanguage||!location){
+        return res.status(400).json({
+            message:"All fields are required",
+            missingFields:[
+                !fullName && "fullname",
+                !bio && "bio",
+                !nativeLanguage && "nativeLanguage",
+                !learningLanguage && "learningLanguage",
+                !location && "location",
+            ].filter(Boolean),
+        })
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userId,{
+        ...req.body,
+        isOnboarded:true,
+    },{new:true});
+
+    if(!updatedUser){
+        throw new ApiError(404,"user not found")
+    }
+
+    return res.status(201)
+    .json(new ApiResponse(200, updatedUser,"user created succesfully"))
+});
